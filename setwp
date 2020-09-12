@@ -1,0 +1,112 @@
+#!/bin/sh
+
+rootdir="$HOME/Wallpapers/"
+
+current=`grep -o "'.*" ~/.fehbg | tr -d "'" | xargs dirname |awk '{print $1}'`
+
+#flags
+r_flag=''
+show_usage() {
+
+	printf "Usage: setwp [-h] [-c] [-r] [-l] [-i] [-d 'new wallpaper directory'] 'directory' (Default: \$HOME/Wallpapers/)\n" 
+}
+
+show_help() {
+	bold=$(tput bold)
+	normal=$(tput sgr0)
+
+	show_usage
+	printf "\nSpecify the directory with the wallpaper images you would like to set. The number of monitors should be maximum number of images in the directory. The first image will be used to generate a wal colorscheme.
+
+The directory structure should be as follows:
+
+ROOT_WALLPAPER_DIRECTORY
+	|
+	|-------WALLPAPER DIRECTORY 1
+	|		|	
+	|		|-------IMAGES
+	|	
+	|-------WALLPAPER DIRECTORY 2
+	|		|
+	|		|-------IMAGES
+	|
+	|-------[...]
+	
+${bold}OPTIONS${normal}
+
+-h\tDisplay this help message
+-c\tDisplay the current wallpaper set
+-r\tSet with a random wallpaper
+-d\tChange the root wallpaper directory from the default \$HOME/Wallpapers/
+-l\tList the wallpapers currently saved in your root wallpaper directory
+-i\tInteractive mode
+"
+}
+
+interactive() {
+
+	options=($(ls -1 "$rootdir"))
+	ITER=1
+	for i in "${!options[@]}"; do
+		printf "%s) %s\n" "$ITER" "${options[$i]}"
+		let ITER=ITER+1
+	done
+	declare -i input length
+	read input
+	let input=input-1
+	length=${#options[@]}-1
+	if [ $input -lt 0 -o $input -gt $length ]; then
+		printf "Invalid Selection" && interactive
+	else
+		choice="${options[$input]}"
+	fi
+
+}
+
+setw() {
+	dir=''
+	[ -n "$1" ] && dir="$1"
+	[ -n "$r_flag" ] && dir=`find $rootdir -mindepth 1 -type d | sort --random-sort | head -1` 
+	[ ! -d "$dir" ] && dir=$rootdir$dir 
+	[ ! -d "$dir" ] && show_usage && printf "\nInvalid directory: %s\n" $dir && exit 1 
+	echo $dir
+
+	firstfile=`find $dir -type f | tail -1`
+	filecount=`find $dir -type f | wc -l`
+	
+	horizontal=`identify -format '%w' $firstfile`
+	displayhoriz=`xwininfo -root |sed -n 's/.* Width: \([^ ]*\).*/\1/p' || xrandr |sed -n 's/.* current \([^ ]*\).*/\1/p'`
+#	[ "$horizontal" = "$displayhoriz" ] && (wal -n -i $firstfile ; feh --no-xinerama --bg-fill $dir ; exit 1)  
+#	[ $filecount -eq 2 ] && (wal -n -i $firstfile ; feh --bg-fill $dir ; exit 1) || (wal -n -i $firstfile ; feh --bg-fill $firstfile --bg-fill $firstfile ; exit 1)
+	if [ "$filecount" -eq 2 ] ; then
+		
+		wal -n -i $firstfile
+		feh --bg-fill $dir
+	elif [ "$horizontal" = "$displayhoriz" ]; then
+
+		wal -n -i $firstfile 
+		feh --no-xineram --bg-fill $dir
+	else
+		wal -n -i $firstfile
+		feh --bg-fill $firstfile --bg-fill $firstfile
+	fi
+
+}	
+	
+
+while getopts 'hcrd:li' flag; do
+	case "${flag}" in
+		h) show_help ; exit 1;;
+		c) echo $current ; exit 1;;
+		r) r_flag="true" ; setw ; exit 1;;
+		d) [ -d "$OPTARG" ] && rootdir="$OPTARG" ;;
+		l) ls -1 $rootdir; exit 1 ;;
+		i) interactive && setw $choice ; exit 1 ;;
+		*) show_usage ; exit 1 ;;
+	esac
+
+done
+
+shift $(($OPTIND -1))
+
+[ $# -eq 1 ] && setw $1 ; exit 1 || (show_usage ; exit 1)

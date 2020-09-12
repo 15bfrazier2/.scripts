@@ -1,0 +1,6 @@
+#!/bin/sh
+
+#run webcam and show preview
+droidcam-cli -v 192.168.4.49 4747 || droidcam-cli -v ios 4747
+sleep .3 && mpv av://v4l2:/dev/video0 --profile=low-latency --untimed
+

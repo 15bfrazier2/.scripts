@@ -1,0 +1,32 @@
+#!/bin/sh
+
+#choose random wallpaper from ~/.wallpapers and update color scheme with wal
+
+#variables
+
+dir=/home/brock/Wallpapers/ #set your wallpaper directory here with subdirectories of wallpaper sets
+randir=`find $dir -mindepth 1 -type d | sort --random-sort | head -1` #gets random directory in wallpaper folder
+firstfile=`find $randir -type f | tail -1` #uses firstfile in directory to set the wal colorscheme, put the one you like the colors of more at the top
+filecount=`find $randir -type f | wc -l` #filecount necessary for ifs
+horizontal=`identify -format '%w' $firstfile` #horizontal size of image
+displayhoriz=`xwininfo -root |sed -n 's/.* Width: \([^ ]*\).*/\1/p' || xrandr |sed -n 's/.* current \([^ ]*\).*/\1/p'` # horizontal measure of all monitors to compare with image
+
+[ $filecount -eq 2 ] && wal -n -i $firstfile & feh --bg-fill $randir ||
+	[ $horizontal -eq $displayhoriz ] && wal -n -i 
+
+if [ "$filecount" -eq 2 ] #set number of monitors here
+then
+	wal -n -i $firstfile
+	feh --bg-fill $randir
+elif [ "$horizontal" -eq "$displayhoriz" ]
+then
+	
+	wal -n -i $firstfile
+	feh --no-xinerama --bg-fill $randir
+else
+	wal -n -i $firstfile
+	feh --bg-fill $firstfile --bg-fill $firstfile
+fi
+
+
+
