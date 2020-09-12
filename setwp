@@ -70,7 +70,6 @@ setw() {
 	#can give directory with full path or single directory name as long as its in root wp directory
 	#this next part checks to see if directory exists in either incarnation
 	[ -n "$1" ] && dir="$1"
-	[ -n "$r_flag" ] && dir=`find $rootdir -mindepth 1 -type d | sort --random-sort | head -1` #if random option selected, run with random dir
 
 
 	#tell user to use real directory
@@ -98,7 +97,7 @@ while getopts 'hcrd:li' flag; do
 	case "${flag}" in
 		h) show_help ; exit 1;;
 		c) echo $current ; exit 1;;
-		r) r_flag="true" ; setw ; exit 1;;
+		r) r_flag="true" ;;
 		d) [ -d "$OPTARG" ] && rootdir="$OPTARG" ;;
 		l) ls -1 $rootdir; exit 1 ;;
 		i) interactive && setw $choice ; exit 1 ;;
@@ -109,6 +108,9 @@ done
 
 #shift the flags out of the way to get to arguments
 shift $(($OPTIND -1))
+#if r flag
+randir=`find $rootdir -mindepth 1 -type d | sort --random-sort | head -1`
+[ -n "$r_flag" ] && setw $randir ; exit 1 
 
 #if no flags run the setw function with the given argument
 [ $# -eq 1 ] && setw $1 ; exit 1 || (show_usage ; exit 1)
