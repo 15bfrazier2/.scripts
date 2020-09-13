@@ -7,11 +7,11 @@ current=`grep -o "'.*" ~/.fehbg | tr -d "'" | xargs dirname |awk '{print $1}'`
 #flags
 r_flag=''
 i_flag=''
-
+s_flag=''
 
 show_usage() {
 
-	printf "Usage: setwp [-h] [-c] [-r] [-l] [-i] [-d 'new wallpaper directory'] 'directory' (Default: \$HOME/Wallpapers/)\n" 
+	printf "Usage: setwp [-h] [-c] [-r] [-l] [-i] [-s] [-d 'new wallpaper directory'] 'directory' (Default: \$HOME/Wallpapers/)\n" 
 }
 
 #function to display the usage and the use of script
@@ -44,6 +44,7 @@ ${bold}OPTIONS${normal}
 -d\tChange the root wallpaper directory from the default \$HOME/Wallpapers/
 -l\tList the wallpapers currently saved in your root wallpaper directory
 -i\tInteractive mode
+-s\tStretch the image across all monitors
 "
 }
 
@@ -89,14 +90,14 @@ setw() {
 	displayhoriz=`xwininfo -root |sed -n 's/.* Width: \([^ ]*\).*/\1/p' || xrandr |sed -n 's/.* current \([^ ]*\).*/\1/p'`
 
 	#main logic conditionals, if wide enough to cover both, do so, if same number of images as monitors, use one for each, if only 1 put it on both
-	[ "$horizontal" = "$displayhoriz" ] && wal -n -i $firstfile && feh --no-xinerama --bg-fill $dir && exit 0  
+	[ "$horizontal" = "$displayhoriz" -o -n "$s_flag" ] && wal -n -i $firstfile && feh --no-xinerama --bg-fill $firstfile && exit 0  
 	[ $filecount -eq 2 ] && wal -n -i $firstfile && feh --bg-fill $dir && exit 0 || wal -n -i $firstfile && feh --bg-fill $firstfile --bg-fill $firstfile && exit 0
 
 
 }	
 	
 #process flags
-while getopts 'hcrd:li' flag; do
+while getopts 'hcrd:lis' flag; do
 	case "${flag}" in
 		h) show_help && exit 0;;
 		c) echo $current && exit 0;;
@@ -104,6 +105,7 @@ while getopts 'hcrd:li' flag; do
 		d) [ -d "$OPTARG" ] && rootdir="$OPTARG" ;;
 		l) ls -1 $rootdir && exit 0 ;;
 		i) i_flag="true" ;; 
+		s) s_flag="true" ;;
 		*) show_usage && exit 0 ;;
 	esac
 
