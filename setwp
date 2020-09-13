@@ -6,6 +6,9 @@ current=`grep -o "'.*" ~/.fehbg | tr -d "'" | xargs dirname |awk '{print $1}'`
 
 #flags
 r_flag=''
+i_flag=''
+
+
 show_usage() {
 
 	printf "Usage: setwp [-h] [-c] [-r] [-l] [-i] [-d 'new wallpaper directory'] 'directory' (Default: \$HOME/Wallpapers/)\n" 
@@ -74,7 +77,7 @@ setw() {
 
 	#tell user to use real directory
 	[ ! -d "$dir" ] && dir=$rootdir$dir 
-	[ ! -d "$dir" ] && show_usage && printf "\nInvalid directory: %s\n" $dir && exit 1 
+	[ ! -d "$dir" ] && show_usage && printf "\nInvalid directory: %s\n" $dir && exit 0 
 
 	#variables used in the main logic to determine what options to use when setting background with feh
 
@@ -86,8 +89,8 @@ setw() {
 	displayhoriz=`xwininfo -root |sed -n 's/.* Width: \([^ ]*\).*/\1/p' || xrandr |sed -n 's/.* current \([^ ]*\).*/\1/p'`
 
 	#main logic conditionals, if wide enough to cover both, do so, if same number of images as monitors, use one for each, if only 1 put it on both
-	[ "$horizontal" = "$displayhoriz" ] && wal -n -i $firstfile && feh --no-xinerama --bg-fill $dir && exit 1  
-	[ $filecount -eq 2 ] && wal -n -i $firstfile && feh --bg-fill $dir && exit 1 || wal -n -i $firstfile && feh --bg-fill $firstfile --bg-fill $firstfile && exit 1
+	[ "$horizontal" = "$displayhoriz" ] && wal -n -i $firstfile && feh --no-xinerama --bg-fill $dir && exit 0  
+	[ $filecount -eq 2 ] && wal -n -i $firstfile && feh --bg-fill $dir && exit 0 || wal -n -i $firstfile && feh --bg-fill $firstfile --bg-fill $firstfile && exit 0
 
 
 }	
@@ -95,22 +98,26 @@ setw() {
 #process flags
 while getopts 'hcrd:li' flag; do
 	case "${flag}" in
-		h) show_help ; exit 1;;
-		c) echo $current ; exit 1;;
+		h) show_help && exit 0;;
+		c) echo $current && exit 0;;
 		r) r_flag="true" ;;
 		d) [ -d "$OPTARG" ] && rootdir="$OPTARG" ;;
-		l) ls -1 $rootdir; exit 1 ;;
-		i) interactive && setw $choice ; exit 1 ;;
-		*) show_usage ; exit 1 ;;
+		l) ls -1 $rootdir && exit 0 ;;
+		i) i_flag="true" ;; 
+		*) show_usage && exit 0 ;;
 	esac
 
 done
 
 #shift the flags out of the way to get to arguments
 shift $(($OPTIND -1))
+
 #if r flag
 randir=`find $rootdir -mindepth 1 -type d | sort --random-sort | head -1`
-[ -n "$r_flag" ] && setw $randir ; exit 1 
+[ -n "$r_flag" ] && setw $randir && exit 0 
+
+#if i flag
+[ -n "$i_flag" ] && interactive && setw "$choice" && exit 0
 
 #if no flags run the setw function with the given argument
-[ $# -eq 1 ] && setw $1 ; exit 1 || (show_usage ; exit 1)
+[ $# -eq 1 ] && setw $1 && exit 0 || show_usage && exit 0
