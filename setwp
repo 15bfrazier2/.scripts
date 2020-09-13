@@ -62,7 +62,7 @@ interactive() {
 	let input=input-1
 	length=${#options[@]}-1
 	if [ $input -lt 0 -o $input -gt $length ]; then
-		printf "Invalid Selection" && interactive
+		printf "Invalid Selection\n" && interactive
 	else
 		choice="${options[$input]}"
 	fi
@@ -78,7 +78,7 @@ setw() {
 
 	#tell user to use real directory
 	[ ! -d "$dir" ] && dir=$rootdir$dir 
-	[ ! -d "$dir" ] && show_usage && printf "\nInvalid directory: %s\n" $dir && exit 0 
+	[ ! -d "$dir" ] && show_usage && printf "\nInvalid directory: %s\n" $dir && exit 1 
 
 	#variables used in the main logic to determine what options to use when setting background with feh
 
@@ -106,7 +106,7 @@ while getopts 'hcrd:lis' flag; do
 		l) ls -1 $rootdir && exit 0 ;;
 		i) i_flag="true" ;; 
 		s) s_flag="true" ;;
-		*) show_usage && exit 0 ;;
+		*) show_usage && exit 1 ;;
 	esac
 
 done
@@ -122,4 +122,4 @@ randir=`find $rootdir -mindepth 1 -type d | sort --random-sort | head -1`
 [ -n "$i_flag" ] && interactive && setw "$choice" && exit 0
 
 #if no flags run the setw function with the given argument
-[ $# -eq 1 ] && setw $1 && exit 0 || show_usage && exit 0
+[ $# -eq 1 ] && setw $1 && exit 0 || show_usage && exit 1
