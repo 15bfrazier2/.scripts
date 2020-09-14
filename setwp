@@ -61,11 +61,7 @@ interactive() {
 	read input
 	let input=input-1
 	length=${#options[@]}-1
-	if [ $input -lt 0 -o $input -gt $length ]; then
-		printf "Invalid Selection\n" && interactive
-	else
-		choice="${options[$input]}"
-	fi
+	[ $input -lt 0 -o $input -gt $length ] && printf "Invalid Selection\n" && interactive || choice="${options[$input]}"
 
 }
 #main function that does all the logic
